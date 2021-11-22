@@ -89,7 +89,7 @@ namespace Tile {
         return { system.UpDirection, SpaceDirection::UP };
     }
 
-    inline const Axis& AxisFromDirection(const CoordinateSystem3D& system, SpaceDirection direction)
+    inline const Axis AxisFromDirection(const CoordinateSystem3D& system, SpaceDirection direction)
     {
         if (direction == SpaceDirection::RIGHT)
             return system.RightDirection;
@@ -105,7 +105,7 @@ namespace Tile {
                                                         AxisLine line)
     {
         auto targetAxisDesc = SystemDirectionFromLine(target, line);
-        const auto& sourceAxis = AxisFromDirection(source, targetAxisDesc.Direction);
+        const auto sourceAxis = AxisFromDirection(source, targetAxisDesc.Direction);
 
         return {
             static_cast<std::underlying_type_t<AxisLine>>(sourceAxis.Line),
@@ -120,6 +120,7 @@ namespace Tile {
         m_MoveY = CreateComponentMove(source, target, AxisLine::LINE_Y);
         m_MoveZ = CreateComponentMove(source, target, AxisLine::LINE_Z);
 
+        // FIXME: This calculation, at the moment, is incorrect. Will be fixed later.
         m_FlipParity =    source.RightDirection.Sign
                         * source.UpDirection.Sign
                         * source.ForwardDirection.Sign
@@ -155,23 +156,28 @@ namespace Tile {
         std::vector<tinyobj::material_t> mats;
         std::string warn, err;
 
+        m_Vertices.clear();
+        m_Indices.clear();
+
         if (!tinyobj::LoadObj(&attrib, &shapes, &mats, &warn, &err, filepath.c_str()))
         {
             std::cerr << "[ERROR] Failed to load model: \"" << filepath << "\". "
                     << err << warn << std::endl;
-            return nullptr;
-        }
 
-        m_Vertices.clear();
-        m_Indices.clear();
+
+            // Return an empty model so that things do not break due to null pointers
+            auto model = std::make_shared<Model>();
+            model->CreateVertexBuffer(m_Vertices); // m_Vertices is already empty at this point
+            return model;
+        }
 
         // A map from a given (unique) vertex to its index in `m_Vertices`
         std::unordered_map<Vertex, uint32_t> unique_vertices;
 
-
+        // This should be taken as input instead of being hardcoded here... 
         CoordinateSystem3D source = {
             { AxisLine::LINE_X, +1 },
-            { AxisLine::LINE_Y, +1 },
+            { AxisLine::LINE_Y, -1 },
             { AxisLine::LINE_Z, -1 },
         };
 
