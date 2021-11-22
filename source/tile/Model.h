@@ -51,47 +51,71 @@ namespace Tile {
         int m_IndexCount = 0;
     };
 
-    struct SpaceCoordinateSystem
-    {   
-        // enum classes do not support conversion to integers
-        enum AxisLine { AXIS_LINE_X = 0, AXIS_LINE_Y = 1, AXIS_LINE_Z = 2 };
+    /* ========================================================= */
+    /* ========================================================= */
+    /* ========================================================= */
+    /* ========================================================= */
+    /* ====================== SPACE STUFF ====================== */
+    /* ========================================================= */
+    /* ========================================================= */
+    /* ========================================================= */
+    /* ========================================================= */
 
-        struct Axis 
-        {
-            AxisLine line;
-            int sign;
-        };
+    enum class AxisLine { LINE_X = 0, LINE_Y = 1, LINE_Z = 2 };
+    struct Axis
+    {
+        AxisLine line;
+        short sign;
+    };
+
+    struct CoordinateSystem3D
+    {   
+        // The directions below are relative to an imaginary camera placed at the origin
+        // and looking towards the forward direction
+        //
+        // The description of the physical directions are always fixed relative to the camera. The 'RIGHT'
+        // direction will always be the physical right (horizontally going right from the camera origin) regardless of what it
+        // is named (+X, -Z or anything). 'UP' is always, well, up and 'FORWARD' is the direction the camera is looking at,
+        // i.e into the computer screen/camera viewport
 
         Axis RightDirection;
         Axis UpDirection;
         Axis ForwardDirection;
 
     public:
-        SpaceCoordinateSystem(const SpaceCoordinateSystem& other) = default;
-        SpaceCoordinateSystem& operator=(const SpaceCoordinateSystem& other) = default;
+        CoordinateSystem3D(const CoordinateSystem3D& other) = default;
+        CoordinateSystem3D& operator=(const CoordinateSystem3D& other) = default;
     };
 
+    // This class converts a vec3 represented in one CoordinateSystem3D (source) to the SAME vec3, but represented
+    // using a new CoordinateSystem3D (target).
+    // Note that coordinate systems only differ by what axis they use to name the physical directions (RIGHT, UP, and FORWARD)
+    // Example: OpenGL canonical view volume is defined in a 3d coordinate system where the RIGHT direction is +X axis, UP direction
+    // is +Y axis and FORWARD is the -Z axis.
+    //
+    // Also since the conversion involes only rotation and reflection, normals (and any vector) can also be 
+    // safely converted here.
     class SpaceConverter
     {
     public:
-        SpaceConverter(const SpaceCoordinateSystem& source, const SpaceCoordinateSystem& target);
-
+        SpaceConverter(const CoordinateSystem3D& source, const CoordinateSystem3D& target);
         void ConvertInPlace(glm::vec3& vec);
 
-    private:
-        struct CompMove
+        struct CompMove 
         {
-            int deltaDest = 0;
-            int multiplier = 1;
+            int SourceCompLocation;
+            int Multiplier;
         };
-
-        CompMove GenAxisMove(SpaceCoordinateSystem::Axis first, SpaceCoordinateSystem::Axis second);
 
     private:
         CompMove m_MoveX;
         CompMove m_MoveY;
         CompMove m_MoveZ;
     };
+
+    /* ========================================================================================================= */
+    /* ============================================== SPACE STUFF ============================================== */
+    /* ========================================================================================================= */
 
     class ModelBuilder
     {

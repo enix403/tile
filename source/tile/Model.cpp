@@ -58,33 +58,79 @@ namespace Tile {
     }
 
     /* ========================================================= */
-    /* ====================== Space Sutff ====================== */
+    /* ========================================================= */
+    /* ========================================================= */
+    /* ========================================================= */
+    /* ========================================================= */
+    /* ====================== Space Stuff ====================== */
+    /* ========================================================= */
+    /* ========================================================= */
+    /* ========================================================= */
     /* ========================================================= */
 
-    SpaceConverter::SpaceConverter(const SpaceCoordinateSystem& source, const SpaceCoordinateSystem& target)
+    enum class SpaceDirection: short
+    { UP, RIGHT, FORWARD };
+
+    struct AxisDescription
     {
-        m_MoveX = GenAxisMove(source.RightDirection, target.RightDirection);
-        m_MoveY = GenAxisMove(source.UpDirection, target.UpDirection);
-        m_MoveZ = GenAxisMove(source.ForwardDirection, target.ForwardDirection);
+        Axis Axis;
+        SpaceDirection Direction;
+    };
+
+    inline AxisDescription SystemDirectionFromLine(const CoordinateSystem3D& system, AxisLine line)
+    {
+        if (system.RightDirection.line == line)
+            return { system.RightDirection, SpaceDirection::RIGHT };
+
+        if (system.ForwardDirection.line == line)
+            return { system.ForwardDirection, SpaceDirection::FORWARD } ;
+
+        return { system.UpDirection, SpaceDirection::UP };
     }
 
-    SpaceConverter::CompMove SpaceConverter::GenAxisMove(   SpaceCoordinateSystem::Axis first, 
-                                                            SpaceCoordinateSystem::Axis second)
+    inline const Axis& AxisFromDirection(const CoordinateSystem3D& system, SpaceDirection direction)
     {
-        return { second.line - first.line, first.sign * second.sign };
+        if (direction == SpaceDirection::RIGHT)
+            return system.RightDirection;
+        
+        if (direction == SpaceDirection::FORWARD)
+            return system.ForwardDirection;
+
+        return system.UpDirection;
+    }
+
+    inline SpaceConverter::CompMove CreateComponentMove(const CoordinateSystem3D& source,
+                                                        const CoordinateSystem3D& target,
+                                                        AxisLine line)
+    {
+        auto targetAxisDesc = SystemDirectionFromLine(target, line);
+        const auto& sourceAxis = AxisFromDirection(source, targetAxisDesc.Direction);
+
+        return {
+            static_cast<std::underlying_type_t<AxisLine>>(sourceAxis.line), 
+            targetAxisDesc.Axis.sign * sourceAxis.sign
+        };
+    }
+
+
+    SpaceConverter::SpaceConverter(const CoordinateSystem3D& source, const CoordinateSystem3D& target)
+    {
+        m_MoveX = CreateComponentMove(source, target, AxisLine::LINE_X);
+        m_MoveY = CreateComponentMove(source, target, AxisLine::LINE_Y);
+        m_MoveZ = CreateComponentMove(source, target, AxisLine::LINE_Z);
     }
 
     void SpaceConverter::ConvertInPlace(glm::vec3& vec)
     {
         glm::vec3 vecCopy = vec;
-        vec[(0 + m_MoveX.deltaDest) % 3] = vecCopy[0] * m_MoveX.multiplier;
-        vec[(1 + m_MoveY.deltaDest) % 3] = vecCopy[1] * m_MoveY.multiplier;
-        vec[(2 + m_MoveZ.deltaDest) % 3] = vecCopy[2] * m_MoveZ.multiplier;
+        vec[0] = vecCopy[m_MoveX.SourceCompLocation] * m_MoveX.Multiplier;
+        vec[1] = vecCopy[m_MoveY.SourceCompLocation] * m_MoveY.Multiplier;
+        vec[2] = vecCopy[m_MoveZ.SourceCompLocation] * m_MoveZ.Multiplier;
     }
 
-    /* ========================================================== */
-    /* ====================== ModelBuilder ====================== */
-    /* ========================================================== */
+    /* ============================================================================================================== */
+    /* ================================================ ModelBuilder ================================================ */
+    /* ============================================================================================================== */
 
     ModelBuilder::ModelBuilder()
     // Any non-trivial model will have atleast quite a few vertices
@@ -94,7 +140,7 @@ namespace Tile {
         m_Indices(3 * 48)
     {}
 
-    std::shared_ptr<Model> ModelBuilder::LoadObjFromFile(const std::string &filepath, const std::string& shapeName)
+    std::shared_ptr<Model> ModelBuilder::LoadObjFromFile(const std::string& filepath, const std::string& shapeName)
     {
         tinyobj::attrib_t attrib;
         std::vector<tinyobj::shape_t> shapes;
@@ -114,18 +160,17 @@ namespace Tile {
         // A map from a given (unique) vertex to its index in `m_Vertices`
         std::unordered_map<Vertex, uint32_t> unique_vertices;
 
-        // float y_multiplier = -1.0f;
 
-        SpaceCoordinateSystem source = {
-            { SpaceCoordinateSystem::AXIS_LINE_X,  1 },
-            { SpaceCoordinateSystem::AXIS_LINE_Y,  1 },
-            { SpaceCoordinateSystem::AXIS_LINE_Z,  1 },
+        CoordinateSystem3D source = {
+            { AxisLine::LINE_X, +1 },
+            { AxisLine::LINE_Y, -1 },
+            { AxisLine::LINE_Z, -1 },
         };
 
-        SpaceCoordinateSystem target = {
-            { SpaceCoordinateSystem::AXIS_LINE_X,  1 },
-            { SpaceCoordinateSystem::AXIS_LINE_Y,  1 },
-            { SpaceCoordinateSystem::AXIS_LINE_Z,  1 },
+        CoordinateSystem3D target = {
+            { AxisLine::LINE_X, +1 },
+            { AxisLine::LINE_Y, +1 },
+            { AxisLine::LINE_Z, -1 },
         };
 
         SpaceConverter converter(source, target);
