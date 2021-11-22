@@ -61,11 +61,11 @@ namespace Tile {
     /* ========================================================= */
     /* ========================================================= */
 
-    enum class AxisLine { LINE_X = 0, LINE_Y = 1, LINE_Z = 2 };
+    enum class AxisLine : uint8_t { LINE_X = 0, LINE_Y = 1, LINE_Z = 2 };
     struct Axis
     {
-        AxisLine line;
-        short sign;
+        AxisLine Line;
+        int8_t Sign; // -1 or +1
     };
 
     struct CoordinateSystem3D
@@ -75,7 +75,7 @@ namespace Tile {
         //
         // The description of the physical directions are always fixed relative to the camera. The 'RIGHT'
         // direction will always be the physical right (horizontally going right from the camera origin) regardless of what it
-        // is named (+X, -Z or anything). 'UP' is always, well, up and 'FORWARD' is the direction the camera is looking at,
+        // is named (+X, -X, -Z or anything). 'UP' is always, well, up and 'FORWARD' is the direction the camera is looking at,
         // i.e into the computer screen/camera viewport
 
         Axis RightDirection;
@@ -103,14 +103,18 @@ namespace Tile {
 
         struct CompMove 
         {
-            int SourceCompLocation;
-            int Multiplier;
+            uint8_t SourceCompLocation;
+            int8_t Multiplier; // -1 or +1
         };
+
+        inline int FlipParity() const { return m_FlipParity; }
 
     private:
         CompMove m_MoveX;
         CompMove m_MoveY;
         CompMove m_MoveZ;
+
+        int m_FlipParity;
     };
 
     /* ========================================================================================================= */
@@ -128,9 +132,13 @@ namespace Tile {
         }
 
         std::shared_ptr<Model> LoadObjFromFile(const std::string& filepath, const std::string& shapeName);
+        
+        inline bool ShouldToggleCullWindingOrder() const { return m_ToggleWindingOrder; }
 
     private:
         std::vector<Vertex> m_Vertices;
         std::vector<uint32_t> m_Indices;    
+
+        bool m_ToggleWindingOrder;
     };
 }

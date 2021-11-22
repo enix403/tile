@@ -77,6 +77,7 @@ private:
         // m_TestModel = builder.LoadObjFromFile("assets/models/cube.obj");
         // m_TestModel = builder.LoadObjFromFile("assets/_models/Handgun.obj", "Gun_Cube.001");
         // m_TestModel = builder.LoadObjFromFile("assets/_models/Porsche_911_GT2.obj");
+        // m_Camera.SetRadius(6.f);
         // m_TestModel = builder.LoadObjFromFile("assets/_models/Lowpoly_Notebook_2.obj");
         // m_TestModel = builder.LoadObjFromFile("assets/_models/Sting-Sword-lowpoly.obj");
         // m_TestModel = builder.LoadObjFromFile("assets/_models/Lowpoly_tree_sample.obj");
@@ -96,11 +97,19 @@ private:
         // m_DefaultShader->SetUniformFloat3("u_Color", IRGB_TO_FRGB(252, 3, 40));
         // m_DefaultShader->SetUniformFloat3("u_Color", IRGB_TO_FRGB(3, 186, 252));
         // m_DefaultShader->SetUniformFloat3("u_Color", IRGB_TO_FRGB(232, 231, 213));
-        m_DefaultShader->SetUniformFloat3("u_Color", IRGB_TO_FRGB(174, 177, 189));
         // m_DefaultShader->SetUniformFloat3("u_Color", IRGB_TO_FRGB(119, 119, 122));
+        m_DefaultShader->SetUniformFloat3("u_Color", IRGB_TO_FRGB(174, 177, 189));
 
         gl::glEnable(gl::GL_MULTISAMPLE);
         gl::glEnable(gl::GL_DEPTH_TEST);
+
+        // gl::glEnable(gl::GL_CULL_FACE);
+        // gl::glCullFace(gl::GL_BACK);
+        
+        // if (builder.ShouldToggleCullWindingOrder())
+            // gl::glFrontFace(gl::GL_CW);
+        // else
+            // gl::glFrontFace(gl::GL_CCW);
     }
 
     void Loop()

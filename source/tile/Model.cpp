@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <unordered_map>
+#include <cstdint>
 
 #include <TinyObjLoader/tiny_obj_loader.h>
 
@@ -68,8 +69,8 @@ namespace Tile {
     /* ========================================================= */
     /* ========================================================= */
 
-    enum class SpaceDirection: short
-    { UP, RIGHT, FORWARD };
+    enum class SpaceDirection: uint8_t
+    { RIGHT, UP, FORWARD };
 
     struct AxisDescription
     {
@@ -79,10 +80,10 @@ namespace Tile {
 
     inline AxisDescription SystemDirectionFromLine(const CoordinateSystem3D& system, AxisLine line)
     {
-        if (system.RightDirection.line == line)
+        if (system.RightDirection.Line == line)
             return { system.RightDirection, SpaceDirection::RIGHT };
 
-        if (system.ForwardDirection.line == line)
+        if (system.ForwardDirection.Line == line)
             return { system.ForwardDirection, SpaceDirection::FORWARD } ;
 
         return { system.UpDirection, SpaceDirection::UP };
@@ -107,8 +108,8 @@ namespace Tile {
         const auto& sourceAxis = AxisFromDirection(source, targetAxisDesc.Direction);
 
         return {
-            static_cast<std::underlying_type_t<AxisLine>>(sourceAxis.line), 
-            targetAxisDesc.Axis.sign * sourceAxis.sign
+            static_cast<std::underlying_type_t<AxisLine>>(sourceAxis.Line),
+            static_cast<int8_t>(targetAxisDesc.Axis.Sign * sourceAxis.Sign)
         };
     }
 
@@ -118,6 +119,13 @@ namespace Tile {
         m_MoveX = CreateComponentMove(source, target, AxisLine::LINE_X);
         m_MoveY = CreateComponentMove(source, target, AxisLine::LINE_Y);
         m_MoveZ = CreateComponentMove(source, target, AxisLine::LINE_Z);
+
+        m_FlipParity =    source.RightDirection.Sign
+                        * source.UpDirection.Sign
+                        * source.ForwardDirection.Sign
+                        * target.RightDirection.Sign
+                        * target.UpDirection.Sign
+                        * target.ForwardDirection.Sign;
     }
 
     void SpaceConverter::ConvertInPlace(glm::vec3& vec)
@@ -163,7 +171,7 @@ namespace Tile {
 
         CoordinateSystem3D source = {
             { AxisLine::LINE_X, +1 },
-            { AxisLine::LINE_Y, -1 },
+            { AxisLine::LINE_Y, +1 },
             { AxisLine::LINE_Z, -1 },
         };
 
@@ -174,6 +182,8 @@ namespace Tile {
         };
 
         SpaceConverter converter(source, target);
+
+        m_ToggleWindingOrder = converter.FlipParity() == -1;
 
         for (const auto& shape: shapes)
         {
