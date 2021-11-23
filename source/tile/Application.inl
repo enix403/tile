@@ -103,13 +103,13 @@ private:
         gl::glEnable(gl::GL_MULTISAMPLE);
         gl::glEnable(gl::GL_DEPTH_TEST);
 
-        // gl::glEnable(gl::GL_CULL_FACE);
-        // gl::glCullFace(gl::GL_BACK);
+        gl::glEnable(gl::GL_CULL_FACE);
+        gl::glCullFace(gl::GL_BACK);
         
-        // if (builder.ShouldToggleCullWindingOrder())
-            // gl::glFrontFace(gl::GL_CW);
-        // else
-            // gl::glFrontFace(gl::GL_CCW);
+        if (builder.ShouldToggleCullWindingOrder())
+            gl::glFrontFace(gl::GL_CW);
+        else 
+            gl::glFrontFace(gl::GL_CCW);
     }
 
     void Loop()

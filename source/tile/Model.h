@@ -69,7 +69,10 @@ namespace Tile {
     };
 
     struct CoordinateSystem3D
-    {   
+    {
+        // This struct only hold the "name"s given to the physical directions right, up and forward
+        // (e.g the standard OpenGL Clip space has right direction being +X, up is +Y and foward is -Z)
+        //
         // The directions below are relative to an imaginary camera placed at the origin
         // and looking towards the forward direction
         //
@@ -89,9 +92,7 @@ namespace Tile {
 
     // This class converts a vec3 represented in one CoordinateSystem3D (source) to the SAME vec3, but represented
     // using a new CoordinateSystem3D (target).
-    // Note that coordinate systems only differ by what axis they use to name the physical directions (RIGHT, UP, and FORWARD)
-    // Example: OpenGL canonical view volume is defined in a 3d coordinate system where the RIGHT direction is +X axis, UP direction
-    // is +Y axis and FORWARD is the -Z axis.
+    // Note that coordinate systems here only differ by what axis they use to name the physical directions (RIGHT, UP, and FORWARD)
     //
     // Also since the conversion involes only rotation and reflection, normals (and any vector) can also be 
     // safely converted here.
@@ -99,7 +100,7 @@ namespace Tile {
     {
     public:
         SpaceConverter(const CoordinateSystem3D& source, const CoordinateSystem3D& target);
-        void ConvertInPlace(glm::vec3& vec);
+        void ConvertInPlace(glm::vec3& vec) const;
 
         struct CompMove 
         {
@@ -107,14 +108,10 @@ namespace Tile {
             int8_t Multiplier; // -1 or +1
         };
 
-        inline int FlipParity() const { return m_FlipParity; }
-
     private:
         CompMove m_MoveX;
         CompMove m_MoveY;
         CompMove m_MoveZ;
-
-        int m_FlipParity;
     };
 
     /* ========================================================================================================= */
