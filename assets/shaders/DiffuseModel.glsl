@@ -6,33 +6,33 @@ layout (location = 1) in vec3 ia_Normal;
 
 uniform mat4 u_Transform;
 uniform mat4 u_Model;
-uniform vec3 u_Color;
 
-out vec4 i_FragColor;
-
-
-const vec3 DIRECTION_TO_LIGHT = normalize(vec3(1.0, 3.0, -1.0));
-const float AMBIENT_LIGHT = 0.55;
-
+out vec3 fragNormal;
 
 void main()
 {   
     gl_Position = u_Transform * vec4(ia_Pos, 1.0);
 
+    // FIXME: will not work if u_Model contains non-uniform scaling
     vec3 worldNormal = normalize(mat3(u_Model) * ia_Normal);
-
-    float lightIntensity = AMBIENT_LIGHT + max(0, dot(worldNormal, DIRECTION_TO_LIGHT)) * 0.5;
-
-    i_FragColor = vec4(u_Color * lightIntensity, 1.0);
+    fragNormal = worldNormal;
 }
 
 #ShaderSegment:fragment
 #version 420 core
 
-in vec4 i_FragColor;
-out vec4 FragColor;
+const vec3 DIRECTION_TO_LIGHT = normalize(vec3(1.0, 1.5, -1.0));
+const float AMBIENT_LIGHT = 0.55;
+
+uniform vec3 u_Color;
+
+in vec3 fragNormal;
+out vec4 fout_FragColor;
 
 void main()
 {   
-    FragColor = i_FragColor;
+    float lightIntensity = AMBIENT_LIGHT + max(0, dot(normalize(fragNormal), DIRECTION_TO_LIGHT)) * 0.5;
+    vec3 fragColor = u_Color * lightIntensity;
+
+    fout_FragColor = vec4(fragColor, 1.0);
 }
