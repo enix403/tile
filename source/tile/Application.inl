@@ -70,11 +70,12 @@ private:
         ModelBuilder builder;
 
         // m_TestModel = builder.LoadObjFromFile("assets/_models/flat_vase.obj");
-        m_TestModel = builder.LoadObjFromFile("assets/models/smooth_vase.obj");
-        m_Camera.TranslateFocusPoint({ 0.f, 0.2f, 0.f });
-        m_Camera.SetRadius(1.f);
+        // m_TestModel = builder.LoadObjFromFile("assets/models/smooth_vase.obj");
+        // m_Camera.TranslateFocusPoint({ 0.f, 0.2f, 0.f });
+        // m_Camera.SetRadius(1.f);
 
         // m_TestModel = builder.LoadObjFromFile("assets/models/cube.obj");
+        m_TestModel = builder.LoadObjFromFile("assets/models/cube_quads.obj");
         // m_TestModel = builder.LoadObjFromFile("assets/_models/Handgun.obj", "Gun_Cube.001");
         // m_TestModel = builder.LoadObjFromFile("assets/_models/Porsche_911_GT2.obj");
         // m_Camera.SetRadius(6.f);

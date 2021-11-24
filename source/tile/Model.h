@@ -1,15 +1,26 @@
 #pragma once
 
+#include "TinyObjLoader/tiny_obj_loader.h"
 #include "tile/gl_wrappers.h"
 
 #include <cstdint>
 #include <vector>
 #include <memory>
+#include <unordered_map>
+
+// #include <TinyObjLoader/tiny_obj_loader.h>
 
 #include <glm/vec3.hpp>
 
-namespace Tile {
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
 
+namespace tinyobj 
+{
+    struct attrib_t;
+}
+
+namespace Tile {
     struct Vertex
     {
         glm::vec3 position;
@@ -20,6 +31,33 @@ namespace Tile {
             return position == other.position && normal == other.normal;
         }
     };
+}
+
+namespace 
+{
+    // @See https://stackoverflow.com/a/57595105
+    template <typename T, typename... Rest>
+    void combine_hash(std::size_t& seed, const T& v, const Rest&... rest) 
+    {
+        seed ^= std::hash<T>{}(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+        (combine_hash(seed, rest), ...);
+    };
+}
+
+namespace std {
+    using namespace Tile;
+    template<> struct hash<Vertex> {
+        size_t operator()(const Vertex& vertex) const 
+        {
+            size_t seed = 0;
+            combine_hash(seed, vertex.position, vertex.normal);
+            return seed;
+        }
+    };
+}
+
+namespace Tile
+{
 
     class Model
     {
@@ -100,6 +138,10 @@ namespace Tile {
     {
     public:
         SpaceConverter(const CoordinateSystem3D& source, const CoordinateSystem3D& target);
+
+        SpaceConverter(const SpaceConverter& other) = default;
+        SpaceConverter& operator=(const SpaceConverter& other) = default;
+
         void ConvertInPlace(glm::vec3& vec) const;
 
         struct CompMove 
@@ -117,7 +159,6 @@ namespace Tile {
     /* ========================================================================================================= */
     /* ============================================== SPACE STUFF ============================================== */
     /* ========================================================================================================= */
-
     class ModelBuilder
     {
     public:
@@ -133,8 +174,19 @@ namespace Tile {
         inline bool ShouldToggleCullWindingOrder() const { return m_ToggleWindingOrder; }
 
     private:
+        void AddVertex(int vertex_index, int normal_index);
+
+    private:
+
+        std::unique_ptr<SpaceConverter> converter;
+
         std::vector<Vertex> m_Vertices;
-        std::vector<uint32_t> m_Indices;    
+        std::vector<uint32_t> m_Indices;
+
+        // A map from a given (unique) vertex to its index in `m_Vertices`
+        std::unordered_map<Vertex, uint32_t> m_UniqueVertices; 
+
+        std::unique_ptr<tinyobj::attrib_t> attrib;
 
         bool m_ToggleWindingOrder;
     };

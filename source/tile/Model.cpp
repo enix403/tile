@@ -1,44 +1,14 @@
 #include "tile/Model.h"
 
 #include <iostream>
-#include <unordered_map>
-#include <cstdint>
-
 #include <TinyObjLoader/tiny_obj_loader.h>
 
 #include <glm/matrix.hpp>
 #include <glm/mat3x3.hpp>
 
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/hash.hpp>
-
-namespace 
-{
-    // @See https://stackoverflow.com/a/57595105
-    template <typename T, typename... Rest>
-    void combine_hash(std::size_t& seed, const T& v, const Rest&... rest) 
-    {
-        seed ^= std::hash<T>{}(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-        (combine_hash(seed, rest), ...);
-    };
-}
-
-namespace std {
-    using namespace Tile;
-    template<> struct hash<Vertex> {
-        size_t operator()(const Vertex& vertex) const 
-        {
-            size_t seed = 0;
-            combine_hash(seed, vertex.position, vertex.normal);
-            return seed;
-        }
-    };
-}
-
 namespace
 {
     using namespace Tile;
-
 
     enum class SpaceDirection: uint8_t
     { RIGHT, UP, FORWARD };
@@ -61,7 +31,7 @@ namespace
         return { system.UpDirection, SpaceDirection::UP };
     }
 
-    inline const Axis AxisFromDirection(const CoordinateSystem3D& system, SpaceDirection direction)
+    inline Axis AxisFromDirection(const CoordinateSystem3D& system, SpaceDirection direction)
     {
         if (direction == SpaceDirection::RIGHT)
             return system.RightDirection;
@@ -77,7 +47,7 @@ namespace
                                                         AxisLine line)
     {
         auto targetAxisDesc = SystemDirectionFromLine(target, line);
-        const auto sourceAxis = AxisFromDirection(source, targetAxisDesc.Direction);
+        auto sourceAxis = AxisFromDirection(source, targetAxisDesc.Direction);
 
         return {
             static_cast<std::underlying_type_t<AxisLine>>(sourceAxis.Line),
@@ -194,15 +164,16 @@ namespace Tile {
 
     std::shared_ptr<Model> ModelBuilder::LoadObjFromFile(const std::string& filepath, const std::string& shapeName)
     {
-        tinyobj::attrib_t attrib;
+        attrib = std::make_unique<tinyobj::attrib_t>();
         std::vector<tinyobj::shape_t> shapes;
         std::vector<tinyobj::material_t> mats;
         std::string warn, err;
 
         m_Vertices.clear();
         m_Indices.clear();
+        m_UniqueVertices.clear();
 
-        if (!tinyobj::LoadObj(&attrib, &shapes, &mats, &warn, &err, filepath.c_str()))
+        if (!tinyobj::LoadObj(attrib.get(), &shapes, &mats, &warn, &err, filepath.c_str()))
         {
             std::cerr << "[ERROR] Failed to load model: \"" << filepath << "\". "
                     << err << warn << std::endl;
@@ -213,9 +184,6 @@ namespace Tile {
             model->CreateVertexBuffer(m_Vertices); // m_Vertices is already empty at this point
             return model;
         }
-
-        // A map from a given (unique) vertex to its index in `m_Vertices`
-        std::unordered_map<Vertex, uint32_t> unique_vertices;
 
         // This should be taken as input instead of being hardcoded here... 
         CoordinateSystem3D source = {
@@ -230,9 +198,8 @@ namespace Tile {
             { AxisLine::LINE_Z, -1 },
         };
 
-        SpaceConverter converter(source, target);
-
-        m_ToggleWindingOrder = !IsSameHandedness(converter);
+        converter = std::make_unique<SpaceConverter>(source, target);
+        m_ToggleWindingOrder = !IsSameHandedness(*converter);
 
         for (const auto& shape: shapes)
         {
@@ -241,45 +208,29 @@ namespace Tile {
             if (shapeName != "" && shape.name != shapeName)
                 continue;
 
-            for (const auto& indices: shape.mesh.indices)
+            const auto& mesh = shape.mesh;
+            
+            int face_index = 0;
+            int mesh_indicies_index = 0; // Index into shape.mesh.indices
+
+            while (mesh_indicies_index < mesh.indices.size())
             {
-                Vertex vertex {};
+                auto face_vertex_count = mesh.num_face_vertices[face_index];
 
-                if (indices.vertex_index >= 0)
-                {
-                    vertex.position = {
-                        attrib.vertices[3 * indices.vertex_index + 0],
-                        attrib.vertices[3 * indices.vertex_index + 1],
-                        attrib.vertices[3 * indices.vertex_index + 2],
-                    };
+                for (int i = 0; i < face_vertex_count - 2; i ++)
+                {  
+                    // form a triangle with vertices (0, i + 1, i + 2)
+                    const auto& face_elem_a = mesh.indices[mesh_indicies_index + 0 + 0];
+                    const auto& face_elem_b = mesh.indices[mesh_indicies_index + i + 1];
+                    const auto& face_elem_c = mesh.indices[mesh_indicies_index + i + 2];
 
-                    converter.ConvertInPlace(vertex.position);
-                }
-                else {
-                    break;
+                    AddVertex(face_elem_a.vertex_index, face_elem_a.normal_index);
+                    AddVertex(face_elem_b.vertex_index, face_elem_b.normal_index);
+                    AddVertex(face_elem_c.vertex_index, face_elem_c.normal_index);
                 }
 
-                if (indices.normal_index >= 0)
-                {
-                    vertex.normal = {
-                        attrib.normals[3 * indices.normal_index + 0],
-                        attrib.normals[3 * indices.normal_index + 1],
-                        attrib.normals[3 * indices.normal_index + 2],
-                    };
-
-                    converter.ConvertInPlace(vertex.normal);
-                }
-                else {
-                    break;
-                }
-
-                if (unique_vertices.count(vertex) == 0)
-                {
-                    unique_vertices[vertex] = static_cast<uint32_t>(m_Vertices.size());
-                    m_Vertices.push_back(vertex);
-                }
-
-                m_Indices.push_back(unique_vertices[vertex]);
+                mesh_indicies_index += face_vertex_count;
+                face_index++;
             }
         }
 
@@ -287,5 +238,37 @@ namespace Tile {
         model->CreateVertexBuffer(m_Vertices);
         model->CreateIndexBuffer(m_Indices);
         return model;
+    }
+
+    void ModelBuilder::AddVertex(int vertex_index, int normal_index)
+    {
+        Vertex vertex {};
+
+        vertex.position = {
+            attrib->vertices[3 * vertex_index + 0],
+            attrib->vertices[3 * vertex_index + 1],
+            attrib->vertices[3 * vertex_index + 2],
+        };
+
+        converter->ConvertInPlace(vertex.position);
+
+        if (normal_index >= 0)
+        {
+            vertex.normal = {
+                attrib->normals[3 * normal_index + 0],
+                attrib->normals[3 * normal_index + 1],
+                attrib->normals[3 * normal_index + 2],
+            };
+
+            converter->ConvertInPlace(vertex.normal);
+        }
+
+        if (m_UniqueVertices.count(vertex) == 0)
+        {
+            m_UniqueVertices[vertex] = static_cast<uint32_t>(m_Vertices.size());
+            m_Vertices.push_back(vertex);
+        }
+
+        m_Indices.push_back(m_UniqueVertices[vertex]);
     }
 }
