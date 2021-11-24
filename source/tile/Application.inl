@@ -69,26 +69,26 @@ private:
         
         ModelBuilder builder;
 
-        // m_TestModel = builder.LoadObjFromFile("assets/_models/flat_vase.obj");
-        // m_TestModel = builder.LoadObjFromFile("assets/models/smooth_vase.obj");
+        // m_TestModel = builder.LoadWavefrontObj("assets/_models/flat_vase.obj");
+        // m_TestModel = builder.LoadWavefrontObj("assets/models/smooth_vase.obj");
         // m_Camera.TranslateFocusPoint({ 0.f, 0.2f, 0.f });
         // m_Camera.SetRadius(1.f);
 
-        // m_TestModel = builder.LoadObjFromFile("assets/models/cube.obj");
-        m_TestModel = builder.LoadObjFromFile("assets/models/cube_quads.obj");
-        // m_TestModel = builder.LoadObjFromFile("assets/_models/Handgun.obj", "Gun_Cube.001");
-        // m_TestModel = builder.LoadObjFromFile("assets/_models/Porsche_911_GT2.obj");
+        // m_TestModel = builder.LoadWavefrontObj("assets/models/cube.obj");
+        m_TestModel = builder.LoadWavefrontObj("assets/models/cube_quads.obj");
+        // m_TestModel = builder.LoadWavefrontObj("assets/_models/Handgun.obj", "Gun_Cube.001");
+        // m_TestModel = builder.LoadWavefrontObj("assets/_models/Porsche_911_GT2.obj");
         // m_Camera.SetRadius(6.f);
-        // m_TestModel = builder.LoadObjFromFile("assets/_models/Lowpoly_Notebook_2.obj");
-        // m_TestModel = builder.LoadObjFromFile("assets/_models/Sting-Sword-lowpoly.obj");
-        // m_TestModel = builder.LoadObjFromFile("assets/_models/Lowpoly_tree_sample.obj");
+        // m_TestModel = builder.LoadWavefrontObj("assets/_models/Lowpoly_Notebook_2.obj");
+        // m_TestModel = builder.LoadWavefrontObj("assets/_models/Sting-Sword-lowpoly.obj");
+        // m_TestModel = builder.LoadWavefrontObj("assets/_models/Lowpoly_tree_sample.obj");
 
-        // m_TestModel = builder.LoadObjFromFile("assets/_models/CraneoOBJ.obj");
+        // m_TestModel = builder.LoadWavefrontObj("assets/_models/CraneoOBJ.obj");
         // m_Camera.TranslateFocusPoint({ 0.f, 3.f, 0.f });
         // m_Camera.SetRadius(12.f);
         // m_Camera.MoveBallCoords(0.0f, glm::radians(-45.0f));
 
-        // m_TestModel = builder.LoadObjFromFile("assets/_models/Speaker.obj");
+        // m_TestModel = builder.LoadWavefrontObj("assets/_models/Speaker.obj");
         // m_Camera.TranslateFocusPoint({ 0.f, 1.f, 0.f });
         // m_Camera.MoveBallCoords(0.0f, glm::radians(-45.0f));
 
@@ -107,10 +107,7 @@ private:
         gl::glEnable(gl::GL_CULL_FACE);
         gl::glCullFace(gl::GL_BACK);
         
-        if (builder.ShouldToggleCullWindingOrder())
-            gl::glFrontFace(gl::GL_CW);
-        else 
-            gl::glFrontFace(gl::GL_CCW);
+        gl::glFrontFace(gl::GL_CCW);
     }
 
     void Loop()

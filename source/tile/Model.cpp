@@ -162,7 +162,7 @@ namespace Tile {
         m_Indices(3 * 48)
     {}
 
-    std::shared_ptr<Model> ModelBuilder::LoadObjFromFile(const std::string& filepath, const std::string& shapeName)
+    std::shared_ptr<Model> ModelBuilder::LoadWavefrontObj(const std::string& filepath, const std::string& shapeName)
     {
         attrib = std::make_unique<tinyobj::attrib_t>();
         std::vector<tinyobj::shape_t> shapes;
@@ -199,7 +199,7 @@ namespace Tile {
         };
 
         converter = std::make_unique<SpaceConverter>(source, target);
-        m_ToggleWindingOrder = !IsSameHandedness(*converter);
+        bool toggleWindingOrder = !IsSameHandedness(*converter);
 
         for (const auto& shape: shapes)
         {
@@ -224,9 +224,20 @@ namespace Tile {
                     const auto& face_elem_b = mesh.indices[mesh_indicies_index + i + 1];
                     const auto& face_elem_c = mesh.indices[mesh_indicies_index + i + 2];
 
-                    AddVertex(face_elem_a.vertex_index, face_elem_a.normal_index);
-                    AddVertex(face_elem_b.vertex_index, face_elem_b.normal_index);
-                    AddVertex(face_elem_c.vertex_index, face_elem_c.normal_index);
+                    // flip the first and third vertices for back-face culling
+                    // if model has been reflected during the coordinate system conversion 
+                    if (toggleWindingOrder) 
+                    {
+                        AddVertex(face_elem_c.vertex_index, face_elem_c.normal_index);
+                        AddVertex(face_elem_b.vertex_index, face_elem_b.normal_index);
+                        AddVertex(face_elem_a.vertex_index, face_elem_a.normal_index);
+                    }
+                    else
+                    {
+                        AddVertex(face_elem_a.vertex_index, face_elem_a.normal_index);
+                        AddVertex(face_elem_b.vertex_index, face_elem_b.normal_index);
+                        AddVertex(face_elem_c.vertex_index, face_elem_c.normal_index);
+                    }
                 }
 
                 mesh_indicies_index += face_vertex_count;
@@ -242,7 +253,7 @@ namespace Tile {
 
     void ModelBuilder::AddVertex(int vertex_index, int normal_index)
     {
-        Vertex vertex {};
+        Vertex vertex;
 
         vertex.position = {
             attrib->vertices[3 * vertex_index + 0],
@@ -261,6 +272,10 @@ namespace Tile {
             };
 
             converter->ConvertInPlace(vertex.normal);
+        }
+        else {
+            // Maybe change the default
+            vertex.normal = { 0.f, 0.f , 0.f};
         }
 
         if (m_UniqueVertices.count(vertex) == 0)

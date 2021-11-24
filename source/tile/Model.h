@@ -8,13 +8,12 @@
 #include <memory>
 #include <unordered_map>
 
-// #include <TinyObjLoader/tiny_obj_loader.h>
-
 #include <glm/vec3.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
 
+// forward declaration
 namespace tinyobj 
 {
     struct attrib_t;
@@ -164,14 +163,12 @@ namespace Tile
     public:
         ModelBuilder();
 
-        inline std::shared_ptr<Model> LoadObjFromFile(const std::string& filepath)
+        inline std::shared_ptr<Model> LoadWavefrontObj(const std::string& filepath)
         {
-            return LoadObjFromFile(filepath, "");
+            return LoadWavefrontObj(filepath, "");
         }
 
-        std::shared_ptr<Model> LoadObjFromFile(const std::string& filepath, const std::string& shapeName);
-        
-        inline bool ShouldToggleCullWindingOrder() const { return m_ToggleWindingOrder; }
+        std::shared_ptr<Model> LoadWavefrontObj(const std::string& filepath, const std::string& shapeName);
 
     private:
         void AddVertex(int vertex_index, int normal_index);
@@ -187,7 +184,5 @@ namespace Tile
         std::unordered_map<Vertex, uint32_t> m_UniqueVertices; 
 
         std::unique_ptr<tinyobj::attrib_t> attrib;
-
-        bool m_ToggleWindingOrder;
     };
 }
