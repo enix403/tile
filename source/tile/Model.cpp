@@ -15,7 +15,7 @@ namespace
 
     struct AxisDescription
     {
-        Axis Axis;
+        Axis AxisObj;
         SpaceDirection Direction;
     };
 
@@ -51,7 +51,7 @@ namespace
 
         return {
             static_cast<std::underlying_type_t<AxisLine>>(sourceAxis.Line),
-            static_cast<int8_t>(targetAxisDesc.Axis.Sign * sourceAxis.Sign)
+            static_cast<int8_t>(targetAxisDesc.AxisObj.Sign * sourceAxis.Sign)
         };
     }
 
@@ -87,7 +87,7 @@ namespace
         spaceConverter.ConvertInPlace(basisZ);
 
         // Just in case. Deteminant should always be +1, but you can never know when floating point arithematic
-        // causes the value to be slightly different that 1.
+        // causes the value to be slightly different.
         int detSign = sign(glm::determinant(glm::mat3(basisX, basisY, basisZ)));
         return detSign == 1;
     }
@@ -212,6 +212,10 @@ namespace Tile {
             {
                 auto face_vertex_count = mesh.num_face_vertices[face_index];
 
+                // Face triangulation
+                // 
+                // This code currently only successfully triangulates Simple Convex Polygons
+                // Concave and/or Complex polygons will give incorrect visual results
                 for (int i = 0; i < face_vertex_count - 2; i ++)
                 {  
                     // form a triangle with vertices (0, i + 1, i + 2)
@@ -257,7 +261,8 @@ namespace Tile {
         };
 
         converter->ConvertInPlace(vertex.position);
-
+        
+        // Normals are optional in obj files
         if (normal_index >= 0)
         {
             vertex.normal = {
@@ -269,7 +274,7 @@ namespace Tile {
             converter->ConvertInPlace(vertex.normal);
         }
         else {
-            // Maybe change the default
+            // Maybe change the default...
             vertex.normal = { 0.f, 0.f , 0.f};
         }
 

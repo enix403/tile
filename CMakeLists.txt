@@ -9,9 +9,9 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 option(
-    GLFW_USE_SYSTEM_LIB 
+    GLFW_USE_PRECOMPILED_SYSTEM_LIB 
     "Uses prebuilt glfw system library instead of compiling from source" 
-    ON
+    OFF
 )
 
 add_executable(
@@ -33,16 +33,23 @@ add_executable(
 )
 target_include_directories(tile PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/source)
 target_include_directories(tile PUBLIC "vendor/SLAM")
-# target_include_directories(tile PUBLIC "vendor/GLAD/include")
 target_include_directories(tile PUBLIC "vendor/tiny_obj_loader")
+# target_include_directories(tile PUBLIC "vendor/GLAD/include")
 
 find_package(Threads REQUIRED)
 
-if(GLFW_USE_SYSTEM_LIB)
+if(GLFW_USE_PRECOMPILED_SYSTEM_LIB)
     find_package(PkgConfig REQUIRED)            # Pkg-Config
     pkg_search_module(GLFW REQUIRED glfw3)      # GLFW
 else()
-    message( FATAL_ERROR "GLFW_USE_SYSTEM_LIB with value of OFF currently not implemented" )
+    set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vendor/GLFW)
+    set(GLFW_LIBRARIES glfw)
+
+    target_include_directories(tile PUBLIC "vendor/GLFW/include")
 endif()
 
 add_subdirectory(vendor/GLM)
