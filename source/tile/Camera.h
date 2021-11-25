@@ -17,6 +17,7 @@ namespace Tile
         Camera& operator=(const Camera& other) = default;
 
         inline const glm::mat4& GetProjectionView() const { return m_ProjectionView; }
+        inline const glm::vec3& GetPosition() const { return m_Position; }
 
         inline void SetAspectRatio(float ar) { m_AspectRatio = ar; RecalculateProjection(); }
         inline void SetClippingPlanes(float near, float far)

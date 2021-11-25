@@ -21,17 +21,18 @@ void main()
 #ShaderSegment:fragment
 #version 420 core
 
-const vec3 DIRECTION_TO_LIGHT = normalize(vec3(1.0, 1.5, -1.0));
+// const vec3 DIRECTION_TO_LIGHT = normalize(vec3(1.0, 1.5, -1.0));
 const float AMBIENT_LIGHT = 0.55;
 
 uniform vec3 u_Color;
+uniform vec3 u_DirectionToLight;
 
 in vec3 fragNormal;
 out vec4 fout_FragColor;
 
 void main()
 {   
-    float lightIntensity = AMBIENT_LIGHT + max(0, dot(normalize(fragNormal), DIRECTION_TO_LIGHT)) * 0.5;
+    float lightIntensity = AMBIENT_LIGHT + max(0, dot(normalize(fragNormal), u_DirectionToLight)) * 0.5;
     vec3 fragColor = u_Color * lightIntensity;
 
     fout_FragColor = vec4(fragColor, 1.0);

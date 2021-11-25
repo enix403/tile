@@ -34,7 +34,7 @@ namespace Tile {
 
     void CameraController::Update()
     {
-        bool isCtrlPressed      = is_key_pressed(m_WinHandle, GLFW_KEY_LEFT_CONTROL);
+        // bool isCtrlPressed      = is_key_pressed(m_WinHandle, GLFW_KEY_LEFT_CONTROL);
         bool isShiftPressed     = is_key_pressed(m_WinHandle, GLFW_KEY_LEFT_SHIFT);
         bool isLeftMousePressed = is_mouse_pressed(m_WinHandle, GLFW_MOUSE_BUTTON_LEFT);
         
@@ -44,14 +44,12 @@ namespace Tile {
         float deltaX = mouseX - m_MouseLastX;
         float deltaY = mouseY - m_MouseLastY;
 
-        if (isCtrlPressed && isLeftMousePressed)
+        if (isLeftMousePressed)
         {
-            Rotate(deltaX, deltaY);
-        }
-
-        if (isShiftPressed && isLeftMousePressed)
-        {
-            Pan(deltaX, deltaY);
+            if (isShiftPressed)
+                Pan(deltaX, deltaY);
+            else
+                Rotate(deltaX, deltaY);
         }
 
         m_MouseLastX = static_cast<float>(mouseX);

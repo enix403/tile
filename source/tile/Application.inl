@@ -70,12 +70,12 @@ private:
         ModelBuilder builder;
 
         // m_TestModel = builder.LoadWavefrontObj("assets/_models/flat_vase.obj");
-        m_TestModel = builder.LoadWavefrontObj("assets/models/smooth_vase.obj");
-        m_Camera.TranslateFocusPoint({ 0.f, 0.2f, 0.f });
-        m_Camera.SetRadius(1.f);
+        // m_TestModel = builder.LoadWavefrontObj("assets/models/smooth_vase.obj");
+        // m_Camera.TranslateFocusPoint({ 0.f, 0.2f, 0.f });
+        // m_Camera.SetRadius(1.f);
 
         // m_TestModel = builder.LoadWavefrontObj("assets/models/cube.obj");
-        // m_TestModel = builder.LoadWavefrontObj("assets/models/cube_quads.obj");
+        m_TestModel = builder.LoadWavefrontObj("assets/models/cube_quads.obj");
         // m_TestModel = builder.LoadWavefrontObj("assets/_models/Handgun.obj", "Gun_Cube.001");
         // m_TestModel = builder.LoadWavefrontObj("assets/_models/Porsche_911_GT2.obj");
         // m_Camera.SetRadius(6.f);
@@ -121,6 +121,7 @@ private:
         // "tranform" matrix. Right now it is only the unit matrix so it doesn't matter
         m_DefaultShader->SetUniformMat4("u_Transform", m_Camera.GetProjectionView());
         m_DefaultShader->SetUniformMat4("u_Model", glm::mat4 { 1.0f });
+        m_DefaultShader->SetUniformFloat3("u_DirectionToLight", glm::normalize(-m_Camera.GetFowardDirection()));
 
         if (m_TestModel->HasIndexBuffer())
             gl::glDrawElements(gl::GL_TRIANGLES, m_TestModel->GetIndexCount(), gl::GL_UNSIGNED_INT, 0);

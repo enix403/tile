@@ -25,6 +25,7 @@ add_executable(
     "source/tile/Camera.cpp"
     "source/tile/CameraController.cpp"
     "source/tile/Model.cpp"
+    "source/tile/Texture.cpp"
 
 
     # dependencies sources
