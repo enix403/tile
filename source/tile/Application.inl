@@ -89,7 +89,7 @@ private:
 
         // m_TestTexture = Texture2D::CreateFromFile("assets/textures/wiki.png");
         // m_TestTexture = Texture2D::CreateFromFile("assets/textures/monster.png");
-        m_TestTexture = Texture2D::CreateFromFile("assets/textures/cosas.png");
+        m_TestTexture = Texture2D::ImageFromFile("assets/textures/cosas.png");
         m_TestTexture->Bind(0);
 
         /* ------------------------------------------- Shader ------------------------------------------- */

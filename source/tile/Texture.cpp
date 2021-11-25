@@ -70,7 +70,7 @@ namespace Tile {
         );
     }
 
-    std::shared_ptr<Texture2D> Texture2D::CreateFromFile(const std::string& filepath)
+    std::shared_ptr<Texture2D> Texture2D::ImageFromFile(const std::string& filepath)
     {
         stbi_set_flip_vertically_on_load(true);
 

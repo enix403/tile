@@ -220,23 +220,23 @@ namespace Tile {
                 for (int i = 0; i < face_vertex_count - 2; i ++)
                 {  
                     // form a triangle with vertices (0, i + 1, i + 2)
-                    const auto& face_elem_a = mesh.indices[mesh_indicies_index + 0 + 0];
-                    const auto& face_elem_b = mesh.indices[mesh_indicies_index + i + 1];
-                    const auto& face_elem_c = mesh.indices[mesh_indicies_index + i + 2];
+                    const auto& face_index_elem_a = mesh.indices[mesh_indicies_index + 0 + 0];
+                    const auto& face_index_elem_b = mesh.indices[mesh_indicies_index + i + 1];
+                    const auto& face_index_elem_c = mesh.indices[mesh_indicies_index + i + 2];
 
                     // flip the first and third vertices for back-face culling
                     // if model has been reflected during the coordinate system conversion 
                     if (toggleWindingOrder) 
                     {
-                        AddVertex(face_elem_c.vertex_index, face_elem_c.normal_index, face_elem_c.texcoord_index);
-                        AddVertex(face_elem_b.vertex_index, face_elem_b.normal_index, face_elem_b.texcoord_index);
-                        AddVertex(face_elem_a.vertex_index, face_elem_a.normal_index, face_elem_a.texcoord_index);
+                        AddVertex(face_index_elem_c);
+                        AddVertex(face_index_elem_b);
+                        AddVertex(face_index_elem_a);
                     }
                     else
                     {
-                        AddVertex(face_elem_a.vertex_index, face_elem_a.normal_index, face_elem_a.texcoord_index);
-                        AddVertex(face_elem_b.vertex_index, face_elem_b.normal_index, face_elem_b.texcoord_index);
-                        AddVertex(face_elem_c.vertex_index, face_elem_c.normal_index, face_elem_c.texcoord_index);
+                        AddVertex(face_index_elem_a);
+                        AddVertex(face_index_elem_b);
+                        AddVertex(face_index_elem_c);
                     }
                 }
 
@@ -251,25 +251,25 @@ namespace Tile {
         return model;
     }
 
-    void ModelBuilder::AddVertex(int vertex_index, int normal_index, int texcoord_index)
+    void ModelBuilder::AddVertex(const tinyobj::index_t& index_elem)
     {
         Vertex vertex;
 
         vertex.position = {
-            attrib->vertices[3 * vertex_index + 0],
-            attrib->vertices[3 * vertex_index + 1],
-            attrib->vertices[3 * vertex_index + 2],
+            attrib->vertices[3 * index_elem.vertex_index + 0],
+            attrib->vertices[3 * index_elem.vertex_index + 1],
+            attrib->vertices[3 * index_elem.vertex_index + 2],
         };
 
         converter->ConvertInPlace(vertex.position);
         
         // Normals are optional in obj files
-        if (normal_index >= 0)
+        if (index_elem.normal_index >= 0)
         {
             vertex.normal = {
-                attrib->normals[3 * normal_index + 0],
-                attrib->normals[3 * normal_index + 1],
-                attrib->normals[3 * normal_index + 2],
+                attrib->normals[3 * index_elem.normal_index + 0],
+                attrib->normals[3 * index_elem.normal_index + 1],
+                attrib->normals[3 * index_elem.normal_index + 2],
             };
 
             converter->ConvertInPlace(vertex.normal);
@@ -279,11 +279,11 @@ namespace Tile {
             vertex.normal = { 0.f, 0.f , 0.f};
         }
 
-        if (texcoord_index >= 0)
+        if (index_elem.texcoord_index >= 0)
         {
             vertex.textureCoords = {
-                attrib->texcoords[2 * texcoord_index + 0],
-                attrib->texcoords[2 * texcoord_index + 1],
+                attrib->texcoords[2 * index_elem.texcoord_index + 0],
+                attrib->texcoords[2 * index_elem.texcoord_index + 1],
             };
         }
         else

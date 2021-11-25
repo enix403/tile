@@ -175,7 +175,7 @@ namespace Tile
         std::shared_ptr<Model> LoadWavefrontObj(const std::string& filepath, const std::string& shapeName);
 
     private:
-        void AddVertex(int vertex_index, int normal_index, int texcoord_index);
+        void AddVertex(const tinyobj::index_t& index_elem);
 
     private:
 

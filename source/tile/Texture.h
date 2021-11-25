@@ -35,7 +35,7 @@ namespace Tile
 
         void SetData(int level, int x, int y, int width, int height, const void* data);
 
-        static std::shared_ptr<Texture2D> CreateFromFile(const std::string& filepath);
+        static std::shared_ptr<Texture2D> ImageFromFile(const std::string& filepath);
 
     private:
         unsigned int m_TexId;
