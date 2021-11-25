@@ -9,6 +9,7 @@
 #include "tile/Camera.h"
 #include "tile/CameraController.h"
 #include "tile/Model.h"
+#include "tile/Texture.h"
 #include "tile/utils.h"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -50,9 +51,13 @@ public:
         m_Camera.SetClippingPlanes(0.01f, 150.0f);
         m_CamController = std::make_shared<CameraController>(m_Camera, win_handle);
 
+        m_Running = true;
+
         BeforeLoop();
         while (!m_MainWindow->ShouldClose())
         {
+            if (!m_Running)
+                break;
             Loop();
         }
 
@@ -63,12 +68,12 @@ private:
 
     void BeforeLoop()
     {
-        gl::glClearColor(0.090196f, 0.090196f, 0.0901961f, 1.f);
-
         m_Camera.SetAspectRatio((float)m_MainWindow->GetWidth() / m_MainWindow->GetHeight());
         
-        ModelBuilder builder;
+        /* ------------------------------------------- Model Loading ------------------------------------------- */
 
+        ModelBuilder builder;
+        
         // m_TestModel = builder.LoadWavefrontObj("assets/_models/flat_vase.obj");
         // m_TestModel = builder.LoadWavefrontObj("assets/models/smooth_vase.obj");
         // m_Camera.TranslateFocusPoint({ 0.f, 0.2f, 0.f });
@@ -76,30 +81,29 @@ private:
 
         // m_TestModel = builder.LoadWavefrontObj("assets/models/cube.obj");
         m_TestModel = builder.LoadWavefrontObj("assets/models/cube_quads.obj");
-        // m_TestModel = builder.LoadWavefrontObj("assets/_models/Handgun.obj", "Gun_Cube.001");
+
         // m_TestModel = builder.LoadWavefrontObj("assets/_models/Porsche_911_GT2.obj");
         // m_Camera.SetRadius(6.f);
-        // m_TestModel = builder.LoadWavefrontObj("assets/_models/Lowpoly_Notebook_2.obj");
-        // m_TestModel = builder.LoadWavefrontObj("assets/_models/Sting-Sword-lowpoly.obj");
-        // m_TestModel = builder.LoadWavefrontObj("assets/_models/Lowpoly_tree_sample.obj");
 
-        // m_TestModel = builder.LoadWavefrontObj("assets/_models/CraneoOBJ.obj");
-        // m_Camera.TranslateFocusPoint({ 0.f, 3.f, 0.f });
-        // m_Camera.SetRadius(12.f);
-        // m_Camera.MoveBallCoords(0.0f, glm::radians(-45.0f));
+        /* ------------------------------------------- Texture ------------------------------------------- */
 
-        // m_TestModel = builder.LoadWavefrontObj("assets/_models/Speaker.obj");
-        // m_Camera.TranslateFocusPoint({ 0.f, 1.f, 0.f });
-        // m_Camera.MoveBallCoords(0.0f, glm::radians(-45.0f));
+        // m_TestTexture = Texture2D::CreateFromFile("assets/textures/wiki.png");
+        // m_TestTexture = Texture2D::CreateFromFile("assets/textures/monster.png");
+        m_TestTexture = Texture2D::CreateFromFile("assets/textures/cosas.png");
+        m_TestTexture->Bind(0);
 
+        /* ------------------------------------------- Shader ------------------------------------------- */
 
-        m_DefaultShader = Tile::Shader::LoadFromFile("assets/shaders/DiffuseModel.glsl", "Test Shader");
+        m_DefaultShader = Shader::LoadFromFile("assets/shaders/DiffuseModel.glsl", "Test Shader");
         m_DefaultShader->Bind();
-        // m_DefaultShader->SetUniformFloat3("u_Color", IRGB_TO_FRGB(252, 3, 40));
-        // m_DefaultShader->SetUniformFloat3("u_Color", IRGB_TO_FRGB(3, 186, 252));
-        // m_DefaultShader->SetUniformFloat3("u_Color", IRGB_TO_FRGB(232, 231, 213));
-        // m_DefaultShader->SetUniformFloat3("u_Color", IRGB_TO_FRGB(119, 119, 122));
         m_DefaultShader->SetUniformFloat3("u_Color", IRGB_TO_FRGB(174, 177, 189));
+
+        m_DefaultShader->SetUniformInt("u_ShouldSampleTexture", 1);
+        m_DefaultShader->SetUniformInt("u_Texture", 0); // the slot the texture is bound to
+
+        /* ------------------------------------------- OpenGL Options ------------------------------------------- */
+
+        gl::glClearColor(0.090196f, 0.090196f, 0.0901961f, 1.f);
 
         gl::glEnable(gl::GL_MULTISAMPLE);
         gl::glEnable(gl::GL_DEPTH_TEST);
@@ -112,6 +116,12 @@ private:
 
     void Loop()
     {
+        if (glfwGetKey(m_MainWindow->GetGLFWHandle(), GLFW_KEY_ESCAPE))
+        {
+            m_Running = false;
+            return;
+        }
+
         gl::glClear(gl::GL_COLOR_BUFFER_BIT | gl::GL_DEPTH_BUFFER_BIT);
 
         m_CamController->Update();
@@ -121,6 +131,8 @@ private:
         // "tranform" matrix. Right now it is only the unit matrix so it doesn't matter
         m_DefaultShader->SetUniformMat4("u_Transform", m_Camera.GetProjectionView());
         m_DefaultShader->SetUniformMat4("u_Model", glm::mat4 { 1.0f });
+
+        // light follows the camera
         m_DefaultShader->SetUniformFloat3("u_DirectionToLight", glm::normalize(-m_Camera.GetFowardDirection()));
 
         if (m_TestModel->HasIndexBuffer())
@@ -133,11 +145,15 @@ private:
     }
 
 private:
+    bool m_Running = false;
+
     std::unique_ptr<Window> m_MainWindow;
 
     Camera m_Camera;
 
     std::shared_ptr<Model> m_TestModel;
+    std::shared_ptr<Texture> m_TestTexture;
+
     std::shared_ptr<CameraController> m_CamController;
     std::shared_ptr<Shader> m_DefaultShader;
 };

@@ -1,9 +1,13 @@
 #include "tile/Texture.h"
-
 #include "tile/opengl_inc.h"
 
+#include <iostream>
+
+#include <STB/stb_image.h>
+
+
 namespace Tile {
-    Texture2D::Texture2D(int width, int height, TexFormat format)
+    Texture2D::Texture2D(int width, int height, TexFormat format, int levelCount)
     :   m_Width(width),
         m_Height(height)
     {
@@ -13,18 +17,15 @@ namespace Tile {
         gl::GLenum gl_internal_format;
 
         switch (format) {
-            case TexFormat::R_8_I:      gl_internal_format = gl::GL_R8; break;
-            case TexFormat::RG_8_I:     gl_internal_format = gl::GL_RG8; break;
-            case TexFormat::RGB_8_I:    gl_internal_format = gl::GL_RGB8; break;
-            case TexFormat::RGBA_8_I:   gl_internal_format = gl::GL_RGBA8; break;
-
-            case TexFormat::R_8_U:      gl_internal_format = gl::GL_R8UI; break;
-            case TexFormat::RG_8_U:     gl_internal_format = gl::GL_RG8UI; break;
-            case TexFormat::RGB_8_U:    gl_internal_format = gl::GL_RGB8UI; break;
-            case TexFormat::RGBA_8_U:   gl_internal_format = gl::GL_RGBA8UI; break;
+            case TexFormat::R_8:      gl_internal_format = gl::GL_R8; break;
+            case TexFormat::RG_8:     gl_internal_format = gl::GL_RG8; break;
+            case TexFormat::RGB_8:    gl_internal_format = gl::GL_RGB8; break;
+            case TexFormat::RGBA_8:   gl_internal_format = gl::GL_RGBA8; break;
         }
 
-        gl::glTexStorage2D(gl::GL_TEXTURE_2D, 1, gl_internal_format, width, height);
+        // gl_internal_format = gl::GL_RGB8;
+
+        gl::glTexStorage2D(gl::GL_TEXTURE_2D, levelCount, gl_internal_format, width, height);
 
         gl::glTexParameteri(gl::GL_TEXTURE_2D, gl::GL_TEXTURE_MIN_FILTER, gl::GL_LINEAR);
         gl::glTexParameteri(gl::GL_TEXTURE_2D, gl::GL_TEXTURE_MAG_FILTER, gl::GL_NEAREST);
@@ -33,15 +34,10 @@ namespace Tile {
 
 
         switch (format) {
-            case TexFormat::R_8_I:    { m_FormatComponents = gl::GL_RED; m_FormatTypes = gl::GL_BYTE; break; }
-            case TexFormat::RG_8_I:   { m_FormatComponents = gl::GL_RG; m_FormatTypes = gl::GL_BYTE; break; }
-            case TexFormat::RGB_8_I:  { m_FormatComponents = gl::GL_RGB; m_FormatTypes = gl::GL_BYTE; break; }
-            case TexFormat::RGBA_8_I: { m_FormatComponents = gl::GL_RGBA; m_FormatTypes = gl::GL_BYTE; break; }
-
-            case TexFormat::R_8_U:    { m_FormatComponents = gl::GL_RED; m_FormatTypes = gl::GL_UNSIGNED_BYTE; break; }
-            case TexFormat::RG_8_U:   { m_FormatComponents = gl::GL_RG; m_FormatTypes = gl::GL_UNSIGNED_BYTE; break; }
-            case TexFormat::RGB_8_U:  { m_FormatComponents = gl::GL_RGB; m_FormatTypes = gl::GL_UNSIGNED_BYTE; break; }
-            case TexFormat::RGBA_8_U: { m_FormatComponents = gl::GL_RGBA; m_FormatTypes = gl::GL_UNSIGNED_BYTE; break; }
+            case TexFormat::R_8:    { m_FormatComponents = gl::GL_RED; m_FormatTypes = gl::GL_UNSIGNED_BYTE; break; }
+            case TexFormat::RG_8:   { m_FormatComponents = gl::GL_RG; m_FormatTypes = gl::GL_UNSIGNED_BYTE; break; }
+            case TexFormat::RGB_8:  { m_FormatComponents = gl::GL_RGB; m_FormatTypes = gl::GL_UNSIGNED_BYTE; break; }
+            case TexFormat::RGBA_8: { m_FormatComponents = gl::GL_RGBA; m_FormatTypes = gl::GL_UNSIGNED_BYTE; break; }
         }
     }
 
@@ -56,12 +52,17 @@ namespace Tile {
         gl::glBindTexture(gl::GL_TEXTURE_2D, m_TexId);
     }
 
-    void Texture2D::SetData(int x, int y, int width, int height, const void *data)
+    void Texture2D::Unbind() const
+    {
+        gl::glBindTexture(gl::GL_TEXTURE_2D, 0);
+    }
+
+    void Texture2D::SetData(int level, int x, int y, int width, int height, const void *data)
     {
         Bind(0);
         gl::glTexSubImage2D(
             gl::GL_TEXTURE_2D, 
-            0, 
+            level, 
             x, y, 
             width, height, 
             m_FormatComponents, m_FormatTypes, 
@@ -69,9 +70,41 @@ namespace Tile {
         );
     }
 
-    // std::shared_ptr<Texture2D> Texture2D::CreateFromFile(const std::string& filepath)
-    // {
+    std::shared_ptr<Texture2D> Texture2D::CreateFromFile(const std::string& filepath)
+    {
+        stbi_set_flip_vertically_on_load(true);
 
-    // }
+        int width, height, channels;
+
+        stbi_uc* image_data = stbi_load(filepath.c_str(), &width, &height, &channels, 0);
+
+        if (image_data == nullptr)
+        {
+            std::cerr << "[ERROR] Failed to load texture \"" << filepath << "\"" << std::endl;
+            return std::make_shared<Texture2D>(1, 1, TexFormat::R_8);
+        }
+
+        TexFormat format;
+        switch (channels) {
+            case 1: format = TexFormat::R_8;      break;
+            case 2: format = TexFormat::RG_8;     break;
+            case 3: format = TexFormat::RGB_8;    break;
+            case 4: format = TexFormat::RGBA_8;   break;
+
+            default:
+            {
+                std::cerr << "[ERROR] Unsuppported channel count (= " << channels << ") in texture \"" 
+                        << filepath << "\"" 
+                        << std::endl;
+                return std::make_shared<Texture2D>(1, 1, TexFormat::R_8);
+            }
+        }
+
+        auto texture = std::make_shared<Texture2D>(width, height, format);
+        texture->SetData(0, 0, 0, width, height, image_data);
+
+        stbi_image_free(image_data);
+        return texture;
+    }
 
 }

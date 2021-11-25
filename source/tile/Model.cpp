@@ -117,8 +117,9 @@ namespace Tile {
         m_VertexCount = vertices.size();
         
         m_VA.AddVertexBuffer(m_VBuf, {
-            {0, "ia_Pos",    3, VertAttribComponentType::Float, false},
-            {1, "ia_Normal", 3, VertAttribComponentType::Float, false},
+            {0, "ia_Pos",       3, VertAttribComponentType::Float, false},
+            {1, "ia_Normal",    3, VertAttribComponentType::Float, false},
+            {2, "ia_TexCoords", 2, VertAttribComponentType::Float, false},
         });
 
         m_VBuf.SetData(vertices.data(), sizeof(Vertex) * m_VertexCount);
@@ -227,15 +228,15 @@ namespace Tile {
                     // if model has been reflected during the coordinate system conversion 
                     if (toggleWindingOrder) 
                     {
-                        AddVertex(face_elem_c.vertex_index, face_elem_c.normal_index);
-                        AddVertex(face_elem_b.vertex_index, face_elem_b.normal_index);
-                        AddVertex(face_elem_a.vertex_index, face_elem_a.normal_index);
+                        AddVertex(face_elem_c.vertex_index, face_elem_c.normal_index, face_elem_c.texcoord_index);
+                        AddVertex(face_elem_b.vertex_index, face_elem_b.normal_index, face_elem_b.texcoord_index);
+                        AddVertex(face_elem_a.vertex_index, face_elem_a.normal_index, face_elem_a.texcoord_index);
                     }
                     else
                     {
-                        AddVertex(face_elem_a.vertex_index, face_elem_a.normal_index);
-                        AddVertex(face_elem_b.vertex_index, face_elem_b.normal_index);
-                        AddVertex(face_elem_c.vertex_index, face_elem_c.normal_index);
+                        AddVertex(face_elem_a.vertex_index, face_elem_a.normal_index, face_elem_a.texcoord_index);
+                        AddVertex(face_elem_b.vertex_index, face_elem_b.normal_index, face_elem_b.texcoord_index);
+                        AddVertex(face_elem_c.vertex_index, face_elem_c.normal_index, face_elem_c.texcoord_index);
                     }
                 }
 
@@ -250,7 +251,7 @@ namespace Tile {
         return model;
     }
 
-    void ModelBuilder::AddVertex(int vertex_index, int normal_index)
+    void ModelBuilder::AddVertex(int vertex_index, int normal_index, int texcoord_index)
     {
         Vertex vertex;
 
@@ -276,6 +277,18 @@ namespace Tile {
         else {
             // Maybe change the default...
             vertex.normal = { 0.f, 0.f , 0.f};
+        }
+
+        if (texcoord_index >= 0)
+        {
+            vertex.textureCoords = {
+                attrib->texcoords[2 * texcoord_index + 0],
+                attrib->texcoords[2 * texcoord_index + 1],
+            };
+        }
+        else
+        {
+            vertex.textureCoords = { 0.f, 0.f };
         }
 
         if (m_UniqueVertices.count(vertex) == 0)

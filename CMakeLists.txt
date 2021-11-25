@@ -31,11 +31,12 @@ add_executable(
     # dependencies sources
     "vendor/SLAM/slam/slam.cpp"
     "vendor/tiny_obj_loader/TinyObjLoader/tiny_obj_loader.cpp"
+    "vendor/stb/STB/stb_image.c"
 )
 target_include_directories(tile PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/source)
 target_include_directories(tile PUBLIC "vendor/SLAM")
 target_include_directories(tile PUBLIC "vendor/tiny_obj_loader")
-# target_include_directories(tile PUBLIC "vendor/GLAD/include")
+target_include_directories(tile PUBLIC "vendor/stb")
 
 find_package(Threads REQUIRED)
 

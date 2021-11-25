@@ -8,6 +8,7 @@
 #include <memory>
 #include <unordered_map>
 
+#include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -24,10 +25,13 @@ namespace Tile {
     {
         glm::vec3 position;
         glm::vec3 normal;
+        glm::vec2 textureCoords;
 
         bool operator==(const Vertex& other) const
         {
-            return position == other.position && normal == other.normal;
+            return  position == other.position && 
+                    normal == other.normal &&
+                    textureCoords == other.textureCoords;
         }
     };
 }
@@ -49,7 +53,7 @@ namespace std {
         size_t operator()(const Vertex& vertex) const 
         {
             size_t seed = 0;
-            combine_hash(seed, vertex.position, vertex.normal);
+            combine_hash(seed, vertex.position, vertex.normal, vertex.textureCoords);
             return seed;
         }
     };
@@ -171,7 +175,7 @@ namespace Tile
         std::shared_ptr<Model> LoadWavefrontObj(const std::string& filepath, const std::string& shapeName);
 
     private:
-        void AddVertex(int vertex_index, int normal_index);
+        void AddVertex(int vertex_index, int normal_index, int texcoord_index);
 
     private:
 
