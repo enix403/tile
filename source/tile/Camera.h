@@ -19,6 +19,9 @@ namespace Tile
         inline const glm::mat4& GetProjectionView() const { return m_ProjectionView; }
         inline const glm::vec3& GetPosition() const { return m_Position; }
 
+        inline float GetNearPlane() const { return m_PlaneNear; }
+        inline float GetFarPlane() const { return m_PlaneFar; }
+
         inline void SetAspectRatio(float ar) { m_AspectRatio = ar; RecalculateProjection(); }
         inline void SetClippingPlanes(float near, float far)
         { 

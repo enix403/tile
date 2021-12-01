@@ -236,8 +236,8 @@ namespace {
         while(getline(fileStream, line))
         {
             lineNumber++;
-            if(line.empty())
-                continue;
+            // if(line.empty())
+                // continue;
 
             if(line.rfind("#ShaderSegment:", 0) == 0)
             {

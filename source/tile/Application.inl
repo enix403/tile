@@ -48,8 +48,8 @@ public:
             app->m_CamController->OnScroll((float)yOffset);
         });
 
-        m_Camera.SetClippingPlanes(0.01f, 150.0f);
-        m_CamController = std::make_shared<CameraController>(m_Camera, win_handle);
+        m_Camera.SetClippingPlanes(0.01f, 100.0f);
+        m_CamController = std::make_unique<CameraController>(m_Camera, win_handle);
 
         m_Running = true;
 
@@ -98,8 +98,19 @@ private:
         m_DefaultShader->Bind();
         m_DefaultShader->SetUniformFloat3("u_Color", IRGB_TO_FRGB(174, 177, 189));
 
-        m_DefaultShader->SetUniformInt("u_ShouldSampleTexture", 1);
+        m_DefaultShader->SetUniformInt("u_ShouldSampleTexture", 0);
         m_DefaultShader->SetUniformInt("u_Texture", 0); // the slot the texture is bound to
+
+        /* ------------------------------------------- Grid ------------------------------------------- */
+
+        m_GridShader = Shader::LoadFromFile("assets/shaders/WorldGrid.glsl", "Grid Shader");
+
+        m_GridBuf = std::make_unique<VertexBuffer>();
+        m_GridVAO = std::make_unique<VertexArray>();
+        
+        float gridTrigger[6] = { 0.f };
+        m_GridBuf->SetData(gridTrigger, sizeof(float) * 6);
+        m_GridVAO->AddVertexBuffer(*m_GridBuf, {{ 0, "Tigger", 1, VertAttribComponentType::Float, false }});
 
         /* ------------------------------------------- OpenGL Options ------------------------------------------- */
 
@@ -108,10 +119,10 @@ private:
         gl::glEnable(gl::GL_MULTISAMPLE);
         gl::glEnable(gl::GL_DEPTH_TEST);
 
-        gl::glEnable(gl::GL_CULL_FACE);
         gl::glCullFace(gl::GL_BACK);
-        
         gl::glFrontFace(gl::GL_CCW);
+
+        gl::glBlendFunc(gl::GL_SRC_ALPHA, gl::GL_ONE_MINUS_SRC_ALPHA);
     }
 
     void Loop()
@@ -125,7 +136,13 @@ private:
         gl::glClear(gl::GL_COLOR_BUFFER_BIT | gl::GL_DEPTH_BUFFER_BIT);
 
         m_CamController->Update();
+
+        /* Draw the model */
+        gl::glDisable(gl::GL_BLEND);
+        gl::glEnable(gl::GL_CULL_FACE);
+
         m_TestModel->GetVA().Bind();
+        m_DefaultShader->Bind();
 
         // TODO: multiply m_ProjectionView with model matrix to make up the actual
         // "tranform" matrix. Right now it is only the unit matrix so it doesn't matter
@@ -139,6 +156,19 @@ private:
             gl::glDrawElements(gl::GL_TRIANGLES, m_TestModel->GetIndexCount(), gl::GL_UNSIGNED_INT, 0);
         else
             gl::glDrawArrays(gl::GL_TRIANGLES, 0,  m_TestModel->GetVertexCount());
+
+
+        /* Draw the grid */
+        gl::glDisable(gl::GL_CULL_FACE);
+        gl::glEnable(gl::GL_BLEND);
+
+        m_GridShader->Bind();
+        m_GridShader->SetUniformMat4("u_ProjectionView", m_Camera.GetProjectionView());
+
+        m_GridShader->SetUniformFloat("u_CamNear", m_Camera.GetNearPlane());
+        m_GridShader->SetUniformFloat("u_CamFar", m_Camera.GetFarPlane());
+        m_GridVAO->Bind();
+        gl::glDrawArrays(gl::GL_TRIANGLES, 0, 6);
 
         m_MainWindow->SwapBuffers();
         m_MainWindow->PollEvents();
@@ -154,7 +184,11 @@ private:
     std::shared_ptr<Model> m_TestModel;
     std::shared_ptr<Texture> m_TestTexture;
 
-    std::shared_ptr<CameraController> m_CamController;
+    std::unique_ptr<CameraController> m_CamController;
+    std::shared_ptr<Shader> m_GridShader;
     std::shared_ptr<Shader> m_DefaultShader;
+
+    std::unique_ptr<VertexBuffer> m_GridBuf;
+    std::unique_ptr<VertexArray> m_GridVAO; 
 };
 
