@@ -27,16 +27,26 @@ add_executable(
     "source/tile/Model.cpp"
     "source/tile/Texture.cpp"
 
-
     # dependencies sources
     "vendor/SLAM/slam/slam.cpp"
     "vendor/tiny_obj_loader/TinyObjLoader/tiny_obj_loader.cpp"
     "vendor/stb/STB/stb_image.c"
+
+    # Dear ImGui
+    "vendor/DearImgui_Docking/imgui/imgui.cpp"
+    "vendor/DearImgui_Docking/imgui/imgui_demo.cpp"
+    "vendor/DearImgui_Docking/imgui/imgui_draw.cpp"
+    "vendor/DearImgui_Docking/imgui/imgui_tables.cpp"
+    "vendor/DearImgui_Docking/imgui/imgui_widgets.cpp"
+
+    "source/thirdparty/imgui_impl/imgui_impl_glfw.cpp"
+    "source/thirdparty/imgui_impl/imgui_impl_opengl3.cpp"
 )
 target_include_directories(tile PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/source)
 target_include_directories(tile PUBLIC "vendor/SLAM")
 target_include_directories(tile PUBLIC "vendor/tiny_obj_loader")
 target_include_directories(tile PUBLIC "vendor/stb")
+target_include_directories(tile PUBLIC "vendor/DearImgui_Docking")
 
 find_package(Threads REQUIRED)
 
