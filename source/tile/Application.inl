@@ -14,6 +14,7 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <GLFW/glfw3.h>
+// #include <imgui/imgui.h>
 
 using namespace Tile;
 
@@ -135,9 +136,19 @@ private:
 
         gl::glClear(gl::GL_COLOR_BUFFER_BIT | gl::GL_DEPTH_BUFFER_BIT);
 
+        Draw();
+
+        m_MainWindow->SwapBuffers();
+        m_MainWindow->PollEvents();
+    }
+
+    void Draw()
+    {
         m_CamController->Update();
 
-        /* Draw the model */
+        /* ============================================================================================================ */
+        /* ============================================== Draw the model ============================================== */
+        /* ============================================================================================================ */
         gl::glDisable(gl::GL_BLEND);
         gl::glEnable(gl::GL_CULL_FACE);
 
@@ -158,20 +169,19 @@ private:
             gl::glDrawArrays(gl::GL_TRIANGLES, 0,  m_TestModel->GetVertexCount());
 
 
-        /* Draw the grid */
+        /* ============================================================================================================ */
+        /* =============================================== Draw the grid ============================================== */
+        /* ============================================================================================================ */
         gl::glDisable(gl::GL_CULL_FACE);
         gl::glEnable(gl::GL_BLEND);
 
         m_GridShader->Bind();
         m_GridShader->SetUniformMat4("u_ProjectionView", m_Camera.GetProjectionView());
-
         m_GridShader->SetUniformFloat("u_CamNear", m_Camera.GetNearPlane());
         m_GridShader->SetUniformFloat("u_CamFar", m_Camera.GetFarPlane());
+
         m_GridVAO->Bind();
         gl::glDrawArrays(gl::GL_TRIANGLES, 0, 6);
-
-        m_MainWindow->SwapBuffers();
-        m_MainWindow->PollEvents();
     }
 
 private:
