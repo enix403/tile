@@ -18,3 +18,8 @@
 	url = https://github.com/ocornut/imgui.git
 	shallow = true
 	branch = docking
+[submodule "temp2/imgui"]
+	path = temp2/imgui
+	url = https://github.com/ocornut/imgui.git
+	shallow = true
+	branch = docking
